@@ -25,3 +25,7 @@ pnpm-debug.log*
 
 # original, uncompressed source media (compressed copies live in public/videos)
 /videos/
+
+
+# Test Post and Research local
+website-info

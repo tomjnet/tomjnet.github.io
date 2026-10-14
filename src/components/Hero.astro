@@ -2,7 +2,7 @@
 import Header from "./Header.astro";
 import Brush from "./Brush.astro";
 import Arrow from "./Arrow.astro";
-import { site, url } from "../data/site";
+import { contentViewUrl, site, url } from "../data/site";
 ---
 
 <section class="relative isolate flex min-h-[640px] flex-col overflow-hidden bg-ink text-paper lg:h-[clamp(680px,100svh,920px)]">
@@ -46,10 +46,49 @@ import { site, url } from "../data/site";
   <!-- Right-side details, like the reference's "Based in" + vertical label -->
   <div class="absolute right-4 top-28 hidden text-right sm:right-8 md:block lg:right-12">
     <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-paper/70">Now exploring</p>
-    <p class="mt-1 text-sm font-extrabold uppercase">Rigid-body physics</p>
+    <hero-research class="mt-1 block max-w-56">
+      <p data-status class="text-sm font-extrabold uppercase" aria-live="polite">Loading research…</p>
+      <a data-title class="line-clamp-3 text-sm font-extrabold uppercase hover:text-signal" hidden></a>
+    </hero-research>
     <span class="ml-auto mt-3 block h-0.5 w-16 bg-signal"></span>
   </div>
   <p class="vertical absolute bottom-10 right-4 hidden items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] sm:right-8 md:flex lg:right-12">
     Open to good conversations <span class="h-1.5 w-1.5 rounded-full bg-signal"></span>
   </p>
 </section>
+
+<script>
+  import { contentViewUrl, url } from "../data/site";
+  import { loadResearch } from "../scripts/posts";
+
+  class HeroResearch extends HTMLElement {
+    async connectedCallback() {
+      const status = this.querySelector<HTMLElement>("[data-status]")!;
+      const title = this.querySelector<HTMLAnchorElement>("[data-title]")!;
+
+      try {
+        const [latest] = await loadResearch();
+        if (!latest) {
+          status.textContent = "No research listed";
+          return;
+        }
+
+        const href = latest.url ?? (latest.pdf ? contentViewUrl(latest.pdf) : url("/research/"));
+        title.textContent = latest.slug;
+        title.href = href;
+        title.title = latest.title;
+        if (href.startsWith("http")) {
+          title.target = "_blank";
+          title.rel = "noopener noreferrer";
+        }
+        title.hidden = false;
+        status.hidden = true;
+      } catch (err) {
+        console.error(err);
+        status.textContent = "Research unavailable";
+      }
+    }
+  }
+
+  customElements.define("hero-research", HeroResearch);
+</script>
