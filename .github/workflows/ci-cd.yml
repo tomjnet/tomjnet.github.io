@@ -2,11 +2,14 @@ name: CI/CD
 
 # CI: every pull request and push gets type-checked and built.
 # CD: pushes to main (and manual runs) are deployed to GitHub Pages.
+# Posts and research are fetched from the content repo at build time, so every deploy picks up new content.
+# daily-rebuild.yml also calls this workflow once a day, so scheduled posts go live on their date.
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -50,7 +53,7 @@ jobs:
 
       - name: Verify expected pages exist
         run: |
-          for page in index.html posts/index.html posts/view/index.html research/index.html hobbies/index.html; do
+          for page in index.html posts/index.html posts/view/index.html research/index.html hobbies/index.html robots.txt sitemap-index.xml og-image.png; do
             test -f "dist/$page" || { echo "::error::Missing dist/$page"; exit 1; }
           done
 

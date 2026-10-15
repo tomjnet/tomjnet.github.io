@@ -4,14 +4,15 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { resolve, normalize } from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
+import sitemap from '@astrojs/sitemap';
 
 // GitHub Pages: the deploy workflow sets SITE and BASE (e.g. "/my-repo").
 // For a <user>.github.io repo BASE is "/".
 const site = process.env.SITE ?? 'https://tomjnet.github.io';
 const base = process.env.BASE ?? '/';
 
-// Dev only: serve ./website-info at /__content/ so Posts and Research work
-// locally without the real website-info repo.
+// Dev only: serve ./website-info at /__content/ so images in local posts load
+// without the real website-info repo (see src/lib/content.ts).
 /** @returns {import('vite').Plugin} */
 function localContent() {
   const root = resolve('website-info');
@@ -36,12 +37,9 @@ function localContent() {
 export default defineConfig({
   site,
   base,
+  // The old /posts/view/?p= page only redirects, so keep it out of the sitemap.
+  integrations: [sitemap({ filter: (page) => !page.includes('/posts/view/') })],
   vite: {
     plugins: [tailwindcss(), localContent()],
-    // Pre-bundle the posts script's libraries at startup. Otherwise Vite discovers them
-    // mid-session, re-optimizes, and the page gets "504 Outdated Optimize Dep" and stays on "Loading…".
-    optimizeDeps: {
-      include: ['marked', 'dompurify'],
-    },
   },
 });

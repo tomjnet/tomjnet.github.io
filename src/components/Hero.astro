@@ -1,94 +1,80 @@
 ---
+import { existsSync } from "node:fs";
 import Header from "./Header.astro";
 import Brush from "./Brush.astro";
 import Arrow from "./Arrow.astro";
 import { contentViewUrl, site, url } from "../data/site";
+import { getResearch } from "../lib/content";
+
+// TODO: add public/images/headshot.jpg (square, at least 800x800). Until then a technical graphic is shown.
+const hasHeadshot = existsSync("public/images/headshot.jpg");
+
+const [latest] = await getResearch();
+const latestHref = latest ? (latest.url ?? (latest.pdf ? contentViewUrl(latest.pdf) : url("/research/"))) : undefined;
+const stack = ["C++20", "COBOL", "z/OS", "CUDA", "Azure"];
 ---
 
-<section class="relative isolate flex min-h-[640px] flex-col overflow-hidden bg-ink text-paper lg:h-[clamp(680px,100svh,920px)]">
-  <!-- Full-bleed video banner -->
-  <video
-    class="absolute inset-0 -z-20 h-full w-full object-cover"
-    autoplay
-    loop
-    muted
-    playsinline
-    preload="metadata"
-    poster={url("/videos/hero-poster.jpg")}
-    aria-hidden="true"
-  >
-    <source src={url("/videos/hero.webm")} type="video/webm" />
-    <source src={url("/videos/hero.mp4")} type="video/mp4" />
-  </video>
-  <!-- Keep the headline readable over the bright footage -->
-  <div class="absolute inset-0 -z-10 bg-gradient-to-r from-ink/90 via-ink/55 to-ink/10" aria-hidden="true"></div>
-  <div class="absolute inset-x-0 bottom-0 -z-10 h-1/3 bg-gradient-to-t from-ink/70 to-transparent" aria-hidden="true"></div>
-
+<section class="relative isolate flex min-h-[600px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[680px]">
   <Header overlay />
 
-  <div class="container-site relative flex flex-1 flex-col justify-center pb-16 pt-28">
-    <h1 class="relative w-fit font-display text-[72px] uppercase leading-[0.9] sm:text-[112px] lg:text-[148px]">
-      Build<span class="text-signal">.</span> Learn<span class="text-signal">.</span><br />
-      <span class="relative inline-block">
-        Explore<span class="text-signal">.</span>
-        <Brush class="absolute -bottom-6 left-[8%] h-10 w-[105%] sm:-bottom-8 sm:h-14" />
-      </span>
-    </h1>
-    <p class="mt-12 max-w-md text-base leading-relaxed text-paper/85">{site.intro}</p>
-    <div class="mt-8 flex flex-wrap gap-3">
-      <a href={url("/posts/")} class="btn-signal">Read the posts <Arrow size={12} /></a>
-      <a href={url("/research/")} class="inline-flex items-center gap-3 border border-paper/40 px-5 py-3 text-[11px] font-bold uppercase tracking-[0.12em] transition hover:border-paper hover:bg-paper hover:text-ink">
-        See the research <Arrow size={12} />
-      </a>
+  <div class="container-site relative grid flex-1 items-center gap-12 pb-16 pt-28 lg:grid-cols-[1.35fr_1fr] lg:gap-16 lg:pr-24">
+    <div>
+      <h1 class="relative w-fit font-display text-[64px] uppercase leading-[0.9] sm:text-[104px] lg:text-[132px]">
+        Tomas<br />
+        <span class="relative inline-block">
+          Jimenez<span class="text-signal">.</span>
+          <Brush class="absolute -bottom-5 left-[8%] h-8 w-[100%] sm:-bottom-7 sm:h-12" />
+        </span>
+      </h1>
+      <p class="mt-12 text-[13px] font-extrabold uppercase tracking-[0.12em] text-signal">{site.jobTitle}</p>
+      <p class="mt-3 max-w-lg text-base leading-relaxed text-paper/85 sm:text-lg">{site.summary}</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href={site.social.linkedin} target="_blank" rel="noopener noreferrer" class="btn-signal">Let's talk <Arrow size={12} /></a>
+        <a
+          href={url("/research/")}
+          class="inline-flex items-center gap-3 border border-paper/40 px-5 py-3 text-[11px] font-bold uppercase tracking-[0.12em] transition hover:border-paper hover:bg-paper hover:text-ink"
+        >
+          See the research <Arrow size={12} />
+        </a>
+      </div>
+      {
+        latest && (
+          <div class="mt-10 max-w-md border-l-2 border-signal pl-4">
+            <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-paper/70">Now exploring</p>
+            <a
+              href={latestHref}
+              title={latest.title}
+              target={latestHref?.startsWith("http") ? "_blank" : undefined}
+              rel={latestHref?.startsWith("http") ? "noopener noreferrer" : undefined}
+              class="mt-1 line-clamp-2 block text-sm font-extrabold uppercase hover:text-signal"
+            >
+              {latest.slug}
+            </a>
+          </div>
+        )
+      }
+    </div>
+
+    <!-- Headshot when available, otherwise a technical graphic in the site's ink/red style -->
+    <div class="relative hidden aspect-square w-full max-w-[460px] justify-self-end overflow-hidden bg-paper/[0.06] lg:block">
+      {
+        hasHeadshot ? (
+          <img src={url("/images/headshot.jpg")} alt={`${site.name}, ${site.jobTitle}`} class="absolute inset-0 h-full w-full object-cover" fetchpriority="high" />
+        ) : (
+          <div aria-hidden="true">
+            <div class="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.06)_1px,transparent_1px)] bg-[size:40px_40px]" />
+            <div class="absolute bottom-0 right-0 h-[42%] w-[88%] -skew-y-6 bg-signal" />
+            <span class="absolute left-[10%] top-[8%] select-none font-display text-[200px] leading-none text-paper">μs</span>
+            <ul class="absolute bottom-[9%] left-[10%] space-y-1 font-mono text-sm text-paper">
+              {stack.map((s) => <li><span class="text-ink">$</span> {s}</li>)}
+            </ul>
+          </div>
+        )
+      }
     </div>
   </div>
 
-  <!-- Right-side details, like the reference's "Based in" + vertical label -->
-  <div class="absolute right-4 top-28 hidden text-right sm:right-8 md:block lg:right-12">
-    <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-paper/70">Now exploring</p>
-    <hero-research class="mt-1 block max-w-56">
-      <p data-status class="text-sm font-extrabold uppercase" aria-live="polite">Loading research…</p>
-      <a data-title class="line-clamp-3 text-sm font-extrabold uppercase hover:text-signal" hidden></a>
-    </hero-research>
-    <span class="ml-auto mt-3 block h-0.5 w-16 bg-signal"></span>
-  </div>
   <p class="vertical absolute bottom-10 right-4 hidden items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] sm:right-8 md:flex lg:right-12">
     Open to good conversations <span class="h-1.5 w-1.5 rounded-full bg-signal"></span>
   </p>
 </section>
-
-<script>
-  import { contentViewUrl, url } from "../data/site";
-  import { loadResearch } from "../scripts/posts";
-
-  class HeroResearch extends HTMLElement {
-    async connectedCallback() {
-      const status = this.querySelector<HTMLElement>("[data-status]")!;
-      const title = this.querySelector<HTMLAnchorElement>("[data-title]")!;
-
-      try {
-        const [latest] = await loadResearch();
-        if (!latest) {
-          status.textContent = "No research listed";
-          return;
-        }
-
-        const href = latest.url ?? (latest.pdf ? contentViewUrl(latest.pdf) : url("/research/"));
-        title.textContent = latest.slug;
-        title.href = href;
-        title.title = latest.title;
-        if (href.startsWith("http")) {
-          title.target = "_blank";
-          title.rel = "noopener noreferrer";
-        }
-        title.hidden = false;
-        status.hidden = true;
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Research unavailable";
-      }
-    }
-  }
-
-  customElements.define("hero-research", HeroResearch);
-</script>

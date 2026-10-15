@@ -3,7 +3,7 @@ import Arrow from "./Arrow.astro";
 import { site, url } from "../data/site";
 
 interface Props {
-  /** Transparent white header that sits over the home video. */
+  /** Transparent header with white text over the dark home hero; turns white once the page scrolls. */
   overlay?: boolean;
 }
 const { overlay = false } = Astro.props;
@@ -15,7 +15,16 @@ const isActive = (href: string) => {
 };
 ---
 
-<header class:list={["relative z-40", overlay ? "absolute inset-x-0 top-0 text-paper" : "border-b border-ink/10 bg-paper"]}>
+<!-- Always visible. data-scrolled is set by the script below; the overlay variant uses it to switch to white. -->
+<header
+  data-site-header
+  class:list={[
+    "group/header inset-x-0 top-0 z-40 border-b transition-colors duration-300",
+    overlay
+      ? "fixed border-transparent text-paper data-[scrolled]:border-ink/10 data-[scrolled]:bg-paper data-[scrolled]:text-ink"
+      : "sticky border-ink/10 bg-paper",
+  ]}
+>
   <div class="container-site flex h-[72px] items-center justify-between gap-6">
     <a href={url("/")} class="flex items-center gap-1.5 font-sans text-lg font-extrabold uppercase tracking-tight">
       {site.logo}<span class="h-2 w-2 rounded-full bg-signal"></span>
@@ -40,20 +49,32 @@ const isActive = (href: string) => {
     </nav>
 
     <a
-      href={site.social.x}
+      href={site.social.linkedin}
       target="_blank"
       rel="noopener noreferrer"
-      class:list={["hidden lg:inline-flex", overlay ? "btn-signal" : "btn-ink"]}
+      class:list={["hidden lg:inline-flex", overlay ? "btn-signal lg:group-data-[scrolled]/header:hidden" : "btn-ink"]}
     >
       Let's talk <Arrow size={12} />
     </a>
+    {
+      overlay && (
+        <a
+          href={site.social.linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-ink hidden lg:group-data-[scrolled]/header:inline-flex"
+        >
+          Let's talk <Arrow size={12} />
+        </a>
+      )
+    }
 
     <!-- Mobile menu: <details> keeps it JS-free -->
     <details class="group lg:hidden">
       <summary
         class:list={[
           "flex h-10 cursor-pointer list-none items-center px-4 text-[11px] font-bold uppercase tracking-[0.12em] [&::-webkit-details-marker]:hidden",
-          overlay ? "bg-paper text-ink" : "bg-ink text-paper",
+          overlay ? "bg-paper text-ink group-data-[scrolled]/header:bg-ink group-data-[scrolled]/header:text-paper" : "bg-ink text-paper",
         ]}
       >
         <span class="group-open:hidden">Menu</span><span class="hidden group-open:inline">Close</span>
@@ -74,7 +95,7 @@ const isActive = (href: string) => {
             ))
           }
           <li>
-            <a href={site.social.x} target="_blank" rel="noopener noreferrer" class="flex items-center justify-between bg-signal px-4 py-5 text-xs font-bold uppercase tracking-[0.12em] sm:px-8">
+            <a href={site.social.linkedin} target="_blank" rel="noopener noreferrer" class="flex items-center justify-between bg-signal px-4 py-5 text-xs font-bold uppercase tracking-[0.12em] sm:px-8">
               Let's talk <Arrow />
             </a>
           </li>
@@ -83,3 +104,12 @@ const isActive = (href: string) => {
     </details>
   </div>
 </header>
+
+<script>
+  const header = document.querySelector<HTMLElement>("[data-site-header]");
+  if (header) {
+    const update = () => header.toggleAttribute("data-scrolled", window.scrollY > 8);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+  }
+</script>

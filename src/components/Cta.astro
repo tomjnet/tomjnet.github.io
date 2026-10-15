@@ -1,9 +1,16 @@
 ---
+import Github from "lucide-astro/Github";
+import Youtube from "lucide-astro/Youtube";
 import Arrow from "./Arrow.astro";
 import { site } from "../data/site";
+
+const secondary = [
+  { label: "GitHub", href: site.social.github, Icon: Github },
+  { label: "YouTube", href: site.social.youtube, Icon: Youtube },
+];
 ---
 
-<section class="relative overflow-hidden bg-mist">
+<section id="contact" class="relative overflow-hidden bg-mist">
   <!-- Red paint splash, like the reference's corner brush -->
   <svg class="pointer-events-none absolute -right-10 -top-10 h-[140%] w-64 text-signal sm:w-80" viewBox="0 0 200 300" aria-hidden="true">
     <defs>
@@ -21,9 +28,30 @@ import { site } from "../data/site";
     </h2>
     <div class="relative max-w-sm">
       <p class="text-sm leading-relaxed text-ink/70">
-        A question about a post, a paper, a chess opening or a city I should visit? I'd love to hear it.
+        Hiring for a Principal or Staff role in C++, low latency systems, IBM mainframe, compilers or GPU/ML? Or a
+        question about a post or a paper? Message me on LinkedIn.
       </p>
-      <a href={site.social.x} target="_blank" rel="noopener noreferrer" class="btn-ink mt-6">Get in touch <Arrow size={12} /></a>
+      <div class="mt-6 flex flex-wrap items-center gap-4">
+        <a href={site.social.linkedin} target="_blank" rel="noopener noreferrer" class="btn-ink">Get in touch on LinkedIn <Arrow size={12} /></a>
+        <ul class="flex gap-2">
+          {
+            secondary.map(({ label, href, Icon }) => (
+              <li>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  title={label}
+                  class="flex h-10 w-10 items-center justify-center border border-ink/25 transition hover:border-signal hover:text-signal"
+                >
+                  <Icon size={18} stroke-width={1.8} />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
     </div>
   </div>
 </section>

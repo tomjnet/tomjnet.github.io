@@ -1,11 +1,25 @@
 ---
 import Brush from "./Brush.astro";
+import { site } from "../data/site";
+import { getPosts, getResearch, researchStatus } from "../lib/content";
+
+// Every number here comes from the content repo at build time, so it can't go stale.
+const [posts, research] = await Promise.all([getPosts(), getResearch()]);
+const byStatus = Object.entries(
+  research.reduce<Record<string, number>>((acc, r) => {
+    const label = researchStatus(r.status).label;
+    acc[label] = (acc[label] ?? 0) + 1;
+    return acc;
+  }, {}),
+);
+const topics = new Set([...posts, ...research].flatMap((x) => x.tags)).size;
+const pad = (n: number) => String(n).padStart(2, "0");
 
 const facts = [
+  ...byStatus.map(([label, n]) => [pad(n), label]),
+  [pad(posts.length), posts.length === 1 ? "Post" : "Posts"],
+  [pad(topics), "Topics covered"],
   ["μs", "Unit I think in"],
-  ["♞", "Favorite chess piece"],
-  ["✈", "Next trip: always planning"],
-  ["∞", "Books on the list"],
 ];
 ---
 
@@ -16,16 +30,19 @@ const facts = [
       I'm an engineer who believes fast systems and clear thinking belong together.
     </h2>
     <p class="mt-5 max-w-md text-sm leading-relaxed text-ink/70">
-      I spend my days building software and my evenings far from the screen. This site is where I write things down:
-      essays on software and markets, research on physics and simulation, and whatever the last trip or chess game
-      taught me.
+      I work on C++ low latency systems, IBM mainframe software, compilers, CUDA and ML. This site is where I write
+      things down: essays on C++, CPUs and systems, and research on compiler-validated LLM code generation and
+      real-time physics simulation.
     </p>
-    <p class="mt-8 font-display text-3xl uppercase">Tom J<span class="text-signal">.</span></p>
+    <!-- TODO: add a short, factual career summary (current role, years of experience, domains). -->
+    <p class="mt-8 font-display text-3xl uppercase">{site.name}<span class="text-signal">.</span></p>
   </div>
 
   <div class="border-t-2 border-ink pt-6 lg:border-t-0 lg:pt-0">
-    <p class="font-display text-[96px] leading-none">01</p>
-    <p class="mt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-signal">Research paper published</p>
+    <p class="font-display text-[96px] leading-none">{pad(research.length)}</p>
+    <p class="mt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-signal">
+      {research.length === 1 ? "Research paper" : "Research papers"}
+    </p>
     <dl class="mt-6 divide-y divide-ink/10 border-t border-ink/10 text-sm">
       {
         facts.map(([value, label]) => (
@@ -38,10 +55,10 @@ const facts = [
     </dl>
   </div>
 
-  <!-- Graphic block: chess knight on a red slab, echoing the reference's architecture photo -->
+  <!-- Graphic block: compiler-style braces on a red slab -->
   <div class="relative min-h-[320px] overflow-hidden bg-mist" aria-hidden="true">
     <div class="absolute bottom-0 right-0 h-[45%] w-[85%] -skew-y-6 bg-signal"></div>
-    <span class="absolute bottom-[-8%] left-[8%] select-none text-[300px] leading-none text-ink">♞</span>
+    <span class="absolute bottom-[4%] left-[8%] select-none font-display text-[240px] leading-none text-ink">&#123;&#125;</span>
     <Brush class="absolute right-4 top-8 h-8 w-40" />
   </div>
 </section>

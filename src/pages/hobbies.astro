@@ -11,7 +11,28 @@ const tone = ["bg-ink text-paper", "bg-signal text-paper", "bg-mist text-ink"];
 const glyph: Record<string, string> = { Chess: "♞", Reading: "¶", Travel: "✈" };
 ---
 
-<Page title="Hobbies" kicker="Off the keyboard" intro="Away from the keyboard: chess, travel, and a steady stack of books.">
+<Page
+  title="Hobbies"
+  description="Tomas Jimenez away from the keyboard: chess, travel and reading."
+  kicker="Off the keyboard"
+  intro="Away from the keyboard: chess, travel, and a steady stack of books."
+>
+  <!-- The former home page hero video -->
+  <div class="relative mb-14 aspect-[16/9] overflow-hidden bg-ink sm:aspect-[21/9]">
+    <video
+      class="absolute inset-0 h-full w-full object-cover"
+      autoplay
+      loop
+      muted
+      playsinline
+      preload="metadata"
+      poster={url("/videos/hero-poster.jpg")}
+      aria-hidden="true"
+    >
+      <source src={url("/videos/hero.webm")} type="video/webm" />
+      <source src={url("/videos/hero.mp4")} type="video/mp4" />
+    </video>
+  </div>
   <ul class="grid gap-x-5 gap-y-10 md:grid-cols-3">
     {
       entries.map(({ item, Content }, i) => (

@@ -1,37 +1,28 @@
 ---
-// The reference's "Skills" bars, made personal (and honest about the chess).
-const left = [
-  ["Building software", 95],
-  ["AI / ML", 90],
-  ["Low-latency systems", 92],
+// Tech stack, grouped.
+const groups = [
+  { title: "Languages", items: ["C++20", "C", "Python", "Java", "COBOL", "z/Architecture Assembler"] },
+  { title: "Systems", items: ["Low latency", "Concurrency", "Linux and Windows internals", "IBM z/OS", "Db2"] },
+  { title: "Accelerators and ML", items: ["CUDA", "LLM fine tuning", "Compilers"] },
+  { title: "Cloud", items: ["Azure"] },
 ];
-const right = [
-  ["Chess tactics", 60],
-  ["Packing light for trips", 45],
-  ["Protein intake", 100],
-] as const;
 ---
 
-<section class="container-site grid gap-10 border-b border-ink/10 py-16 lg:grid-cols-[1fr_2fr_2fr] lg:gap-16">
+<section id="skills" class="container-site grid gap-10 border-b border-ink/10 py-16 lg:grid-cols-[1fr_4fr] lg:gap-16">
   <div>
     <p class="kicker">Skills</p>
-    <h2 class="heading-bold mt-4 text-2xl">Skills<br />that keep<br />me busy</h2>
+    <h2 class="heading-bold mt-4 text-2xl">Tech<br />stack</h2>
   </div>
-  {
-    [left, right].map((group) => (
-      <ul class="space-y-6">
-        {group.map(([label, value]) => (
-          <li>
-            <div class="flex justify-between text-[11px] font-bold uppercase tracking-[0.12em]">
-              <span>{label}</span>
-              <span class="text-ink/60">{value}%</span>
-            </div>
-            <div class="mt-2 h-[3px] bg-ink/10">
-              <div class="h-full bg-signal" style={`width:${value}%`} />
-            </div>
-          </li>
-        ))}
-      </ul>
-    ))
-  }
+  <div class="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+    {
+      groups.map((g) => (
+        <div class="border-t-2 border-ink pt-4">
+          <h3 class="text-[11px] font-bold uppercase tracking-[0.14em] text-signal">{g.title}</h3>
+          <ul class="mt-4 space-y-2.5 text-sm font-semibold">
+            {g.items.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
 </section>
