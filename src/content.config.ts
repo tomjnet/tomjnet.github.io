@@ -2,7 +2,7 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
-// Posts and research live in the website-info repo and load at runtime (see src/scripts/posts.ts).
+// Posts and research live in the website-info repo and are loaded at build time (see src/lib/content.ts).
 
 const hobbies = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/hobbies" }),

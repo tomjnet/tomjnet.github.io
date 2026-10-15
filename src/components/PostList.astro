@@ -1,5 +1,8 @@
 ---
-// Posts are fetched in the browser from the posts repo, so new posts appear without a rebuild.
+// Posts are rendered at build time from the content repo (see src/lib/content.ts).
+import Arrow from "./Arrow.astro";
+import { assetUrl, formatDate, getPosts, postHref } from "../lib/content";
+
 interface Props {
   /** Max posts to show; omit for all. */
   limit?: number;
@@ -9,74 +12,128 @@ interface Props {
   variant?: "grid" | "list";
 }
 const { limit, filters = false, variant = "list" } = Astro.props;
+
+const posts = (await getPosts()).slice(0, limit);
+const tags = [...new Set(posts.flatMap((p) => p.tags))].sort();
+
+// Tile artwork cycles like the reference's featured-work grid: ink, signal red, mist.
+const TILE = ["bg-ink text-paper", "bg-signal text-paper", "bg-mist text-ink"];
+const tagClass = "border border-ink/25 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider";
 ---
 
-<post-list data-limit={limit} data-filters={filters ? "true" : undefined} data-variant={variant}>
-  {filters && <div data-filters class="mb-8 flex flex-wrap gap-6" role="group" aria-label="Filter by tag"></div>}
-  <p data-status class="py-10 text-sm text-ink/60" role="status">Loading posts…</p>
-  <ul
-    data-list
-    class={variant === "grid" ? "grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4" : "border-t-2 border-ink"}
-  >
-  </ul>
+<post-list>
+  {
+    filters && tags.length > 0 && (
+      <div data-filters class="mb-8 flex flex-wrap gap-6" role="group" aria-label="Filter by tag">
+        {["", ...tags].map((t) => (
+          <button
+            type="button"
+            data-tag={t}
+            aria-pressed={t === "" ? "true" : "false"}
+            class="border-b-2 border-transparent pb-1 text-[11px] font-bold uppercase tracking-[0.12em] transition hover:border-ink aria-pressed:border-signal aria-pressed:text-signal"
+          >
+            {t || "All"}
+          </button>
+        ))}
+      </div>
+    )
+  }
+  {posts.length === 0 && <p class="py-10 text-sm text-ink/60">No posts yet. Check back soon.</p>}
+  {
+    variant === "grid" ? (
+      <ul class="grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        {posts.map((p, i) => (
+          <li>
+            <a href={postHref(p.slug)} class="group block">
+              <div class={`relative aspect-[4/3] overflow-hidden ${TILE[i % TILE.length]}`}>
+                {p.cover ? (
+                  <img
+                    src={assetUrl(p.cover)}
+                    alt=""
+                    loading="lazy"
+                    class="absolute inset-0 h-full w-full bg-white object-contain p-3 transition duration-500 group-hover:scale-[1.03]"
+                  />
+                ) : (
+                  <span class="absolute inset-0 flex items-center p-6 font-display text-4xl uppercase leading-[0.95]">{p.title}</span>
+                )}
+              </div>
+              <p class="mt-4 text-[13px] font-extrabold uppercase leading-snug tracking-tight transition group-hover:text-signal">{p.title}</p>
+              <p class="mt-1 text-xs text-ink/60">
+                {formatDate(p.date)}
+                {p.tags.length > 0 && ` · ${p.tags.join(", ")}`}
+              </p>
+            </a>
+          </li>
+        ))}
+        {
+          // Keep the home grid full while there are fewer posts than slots; one "in progress" tile is enough.
+          limit && posts.length > 0 && posts.length < limit && (
+            <li aria-hidden="true" class="hidden md:block">
+              <div class={`relative flex aspect-[4/3] items-end p-6 ${TILE[posts.length % TILE.length]}`}>
+                <span class="font-display text-3xl uppercase leading-none opacity-40">Next post<br />in progress</span>
+              </div>
+              <p class="mt-4 text-[13px] font-extrabold uppercase tracking-tight text-ink/40">Coming soon</p>
+            </li>
+          )
+        }
+      </ul>
+    ) : (
+      <ul class="border-t-2 border-ink">
+        {posts.map((p, i) => (
+          <li class="border-b border-ink/15" data-tags={p.tags.join("|")}>
+            <a
+              href={postHref(p.slug)}
+              class="group grid gap-4 py-8 transition hover:bg-mist sm:grid-cols-[64px_1fr_auto] sm:gap-8 sm:px-4 lg:grid-cols-[64px_1fr_280px_auto]"
+            >
+              <span class="font-display text-3xl text-signal">{String(i + 1).padStart(2, "0")}</span>
+              <span class="flex flex-col gap-3">
+                <span class="text-xl font-extrabold uppercase leading-[1.1] tracking-tight transition group-hover:text-signal sm:text-2xl">{p.title}</span>
+                {p.summary && <span class="max-w-2xl text-sm leading-relaxed text-ink/70">{p.summary}</span>}
+              </span>
+              <span class="flex flex-col gap-3 sm:col-start-2 lg:col-start-auto">
+                <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink/60">{formatDate(p.date)}</span>
+                <span class="flex flex-wrap gap-2">{p.tags.map((t) => <span class={tagClass}>{t}</span>)}</span>
+              </span>
+              <span class="hidden self-center transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-signal sm:block">
+                <Arrow size={16} />
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  {filters && <p data-empty class="py-10 text-sm text-ink/60" hidden>No posts with this tag.</p>}
 </post-list>
 
 <script>
-  import { loadIndex, postCardHtml, postRowHtml, placeholderHtml, escapeHtml, type PostEntry } from "../scripts/posts";
-
+  // Tag filter: the rows are already in the HTML, this only shows and hides them.
   class PostList extends HTMLElement {
-    posts: PostEntry[] = [];
-    tag = "";
-
-    async connectedCallback() {
-      const status = this.querySelector<HTMLElement>("[data-status]")!;
-      try {
-        const limit = Number(this.dataset.limit) || undefined;
-        this.posts = (await loadIndex()).slice(0, limit);
-        this.tag = new URLSearchParams(location.search).get("tag") ?? "";
-        if (this.dataset.filters) this.renderFilters();
-        this.renderList();
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Couldn't load posts right now. Please try again later.";
-      }
-    }
-
-    renderFilters() {
-      const box = this.querySelector<HTMLElement>("[data-filters]")!;
-      const tags = [...new Set(this.posts.flatMap((p) => p.tags))].sort();
-      if (!tags.length) return;
-      const chip = (t: string, label: string) =>
-        `<button type="button" data-tag="${escapeHtml(t)}" aria-pressed="${this.tag === t}"
-          class="border-b-2 border-transparent pb-1 text-[11px] font-bold uppercase tracking-[0.12em] transition hover:border-ink aria-pressed:border-signal aria-pressed:text-signal">${escapeHtml(label)}</button>`;
-      box.innerHTML = chip("", "All") + tags.map((t) => chip(t, t)).join("");
+    connectedCallback() {
+      const box = this.querySelector<HTMLElement>("[data-filters]");
+      if (!box) return;
+      const apply = (tag: string) => {
+        let shown = 0;
+        this.querySelectorAll<HTMLElement>("li[data-tags]").forEach((li) => {
+          const match = !tag || li.dataset.tags!.split("|").includes(tag);
+          li.hidden = !match;
+          if (match) shown++;
+        });
+        box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tag === tag)));
+        this.querySelector<HTMLElement>("[data-empty]")!.hidden = shown > 0;
+      };
       box.addEventListener("click", (e) => {
         const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-tag]");
         if (!btn) return;
-        this.tag = btn.dataset.tag ?? "";
+        const tag = btn.dataset.tag ?? "";
         const u = new URL(location.href);
-        if (this.tag) u.searchParams.set("tag", this.tag);
+        if (tag) u.searchParams.set("tag", tag);
         else u.searchParams.delete("tag");
         history.replaceState(null, "", u);
-        box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tag === this.tag)));
-        this.renderList();
+        apply(tag);
       });
-    }
-
-    renderList() {
-      const status = this.querySelector<HTMLElement>("[data-status]")!;
-      const list = this.querySelector<HTMLElement>("[data-list]")!;
-      const shown = this.tag ? this.posts.filter((p) => p.tags.includes(this.tag)) : this.posts;
-      const render = this.dataset.variant === "grid" ? postCardHtml : postRowHtml;
-      list.innerHTML = shown.map(render).join("");
-      // Keep the home grid full while there are fewer posts than slots.
-      const slots = Number(this.dataset.limit) || 0;
-      if (this.dataset.variant === "grid" && shown.length && shown.length < slots) {
-        // One "in progress" tile is enough; more would look padded.
-        list.innerHTML += placeholderHtml(shown.length);
-      }
-      status.textContent = shown.length ? "" : "No posts yet — check back soon.";
-      status.hidden = shown.length > 0;
+      const initial = new URLSearchParams(location.search).get("tag");
+      if (initial) apply(initial);
     }
   }
 

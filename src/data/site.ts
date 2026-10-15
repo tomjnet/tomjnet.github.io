@@ -1,13 +1,22 @@
 // Edit this file to change the site's content.
 export const site = {
-  name: "Tom J",
-  logo: "Tom J",
-  description: "Tom J's personal site — posts, research notes, and hobbies.",
-  intro: "Engineer by trade, curious by nature. I build software, chase hard problems, and spend the rest of my time over a chessboard, on the road, or lost in a good book.",
+  name: "Tomas Jimenez",
+  logo: "Tomas Jimenez",
+  jobTitle: "Principal Software Engineer",
+  description:
+    "Tomas Jimenez, Principal Software Engineer: C++, low latency systems, IBM mainframe, compilers and GPU computing.",
+  // One-sentence summary shown in the hero.
+  summary: "I build C++ low latency systems, IBM mainframe software, compilers and GPU/ML tooling.",
+  intro:
+    "Principal Software Engineer working on C++ low latency systems, IBM mainframe software, compilers, CUDA and ML. Writing and research on systems, performance and code generation.",
+  // Three focus keywords, used on the link preview image.
+  focus: ["C++", "Low latency", "Mainframe"],
   social: {
-    x: "https://x.com/tomjnet",
-    github: "https://github.com/tomjnet",
     linkedin: "https://www.linkedin.com/in/tomjnet/",
+    github: "https://github.com/tomjnet",
+    youtube: "https://www.youtube.com/@tomjnet",
+    // Only listed in the JSON-LD profile links, not shown on the page.
+    x: "https://x.com/tomjnet",
   },
   nav: [
     { label: "Home", href: "/" },
@@ -31,20 +40,15 @@ export function url(path: string): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** Where posts and research are loaded from: index.json, posts/*.md, research/*. */
-export function contentBaseUrl(): string {
-  if (import.meta.env.PUBLIC_CONTENT_URL) return import.meta.env.PUBLIC_CONTENT_URL;
-  if (import.meta.env.DEV) return "/__content/";
-  const { owner, repo, branch } = site.contentRepo;
-  return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
-}
-
-/**
- * Link for opening a repo file in the browser. GitHub's file viewer renders PDFs nicely,
- * whereas raw.githubusercontent.com would just download them.
- */
+/** Link for opening a content repo file (e.g. a research PDF) in the browser. */
 export function contentViewUrl(path: string): string {
-  if (import.meta.env.PUBLIC_CONTENT_URL || import.meta.env.DEV) return `${contentBaseUrl()}${path}`;
+  if (/^https?:/i.test(path)) return path;
   const { owner, repo, branch } = site.contentRepo;
   return `https://github.com/${owner}/${repo}/blob/${branch}/${path}`;
+}
+
+/** Raw URL of a content repo file, for images referenced by posts. */
+export function contentRawUrl(path: string): string {
+  const { owner, repo, branch } = site.contentRepo;
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
 }

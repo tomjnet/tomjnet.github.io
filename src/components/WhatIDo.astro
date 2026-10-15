@@ -2,16 +2,16 @@
 import PenLine from "lucide-astro/PenLine";
 import FlaskConical from "lucide-astro/FlaskConical";
 import Zap from "lucide-astro/Zap";
-import Crown from "lucide-astro/Crown";
-import Plane from "lucide-astro/Plane";
+import Binary from "lucide-astro/Binary";
+import Server from "lucide-astro/Server";
 import { url } from "../data/site";
 
 const items = [
-  { Icon: PenLine, title: "Writing", text: "Essays on software, markets and the systems in between.", href: url("/posts/") },
-  { Icon: FlaskConical, title: "Research", text: "Numerical methods, physics engines and careful benchmarks.", href: url("/research/") },
   { Icon: Zap, title: "Low latency", text: "Cache lines, memory layout, and shaving microseconds.", href: url("/posts/") },
-  { Icon: Crown, title: "Chess", text: "Openings studied, endgames lost, lessons learned.", href: url("/hobbies/") },
-  { Icon: Plane, title: "Travel", text: "New cities, long walks, and the occasional beach.", href: url("/hobbies/") },
+  { Icon: Binary, title: "Compilers", text: "Intermediate representations, code generation and compiler-validated LLM output.", href: url("/research/") },
+  { Icon: Server, title: "Mainframe", text: "IBM z/OS, Db2, COBOL and z/Architecture Assembler.", href: url("/#skills") },
+  { Icon: FlaskConical, title: "Research", text: "Compilers, LLM code generation, numerical methods and physics engines.", href: url("/research/") },
+  { Icon: PenLine, title: "Writing", text: "Essays on C++, CPUs and the systems in between.", href: url("/posts/") },
 ];
 ---
 

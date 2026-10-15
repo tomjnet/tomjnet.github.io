@@ -1,40 +1,74 @@
 ---
-// Research is fetched in the browser from the content repo, like posts, so new papers appear without a rebuild.
+// Research is rendered at build time from the content repo (see src/lib/content.ts).
+import Arrow from "./Arrow.astro";
+import { contentViewUrl } from "../data/site";
+import { formatDate, getResearch, researchStatus } from "../lib/content";
+
 interface Props {
   /** Max items to show; omit for all. */
   limit?: number;
 }
 const { limit } = Astro.props;
+
+const items = (await getResearch()).slice(0, limit);
+const tagClass = "border border-ink/25 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider";
+const linkClass =
+  "inline-flex items-center gap-2 border-b-2 border-signal pb-0.5 text-[11px] font-bold uppercase tracking-[0.12em] hover:text-signal";
 ---
 
-<research-list data-limit={limit}>
-  <p data-status class="py-10 text-sm text-ink/60" role="status">Loading research…</p>
-  <ul data-list class="border-t-2 border-ink" hidden></ul>
-</research-list>
-
-<script>
-  import { loadResearch, researchRowHtml } from "../scripts/posts";
-
-  class ResearchList extends HTMLElement {
-    async connectedCallback() {
-      const status = this.querySelector<HTMLElement>("[data-status]")!;
-      const list = this.querySelector<HTMLElement>("[data-list]")!;
-      try {
-        const limit = Number(this.dataset.limit) || undefined;
-        const items = (await loadResearch()).slice(0, limit);
-        if (!items.length) {
-          status.textContent = "No research yet — check back soon.";
-          return;
-        }
-        list.innerHTML = items.map(researchRowHtml).join("");
-        list.hidden = false;
-        status.hidden = true;
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Couldn't load research right now. Please try again later.";
-      }
-    }
-  }
-
-  customElements.define("research-list", ResearchList);
-</script>
+{items.length === 0 && <p class="py-10 text-sm text-ink/60">No research yet. Check back soon.</p>}
+{
+  items.length > 0 && (
+    <ul class="border-t-2 border-ink">
+      {items.map((r, i) => {
+        // The whole row opens the paper in a new window; PDF/Code links sit on top.
+        const main = r.url ?? (r.pdf ? contentViewUrl(r.pdf) : undefined);
+        const status = researchStatus(r.status);
+        const meta = [r.venue, r.date ? formatDate(r.date) : ""].filter(Boolean);
+        return (
+          <li class="group relative border-b border-ink/15">
+            <div class="grid gap-4 py-8 transition group-hover:bg-mist sm:grid-cols-[64px_1fr_auto] sm:gap-8 sm:px-4 lg:grid-cols-[64px_1fr_280px_auto]">
+              <span class="font-display text-3xl text-signal">{String(i + 1).padStart(2, "0")}</span>
+              <div class="flex flex-col gap-3">
+                <h3 class="text-xl font-extrabold uppercase leading-[1.1] tracking-tight sm:text-2xl">
+                  {main ? (
+                    <a href={main} target="_blank" rel="noopener noreferrer" class="after:absolute after:inset-0 group-hover:text-signal">
+                      {r.title}
+                    </a>
+                  ) : (
+                    r.title
+                  )}
+                </h3>
+                {r.summary && <p class="max-w-2xl text-sm leading-relaxed text-ink/70">{r.summary}</p>}
+              </div>
+              <div class="flex flex-col gap-3 sm:col-start-2 lg:col-start-auto">
+                <div class="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-[0.12em]">
+                  <span class={`px-2.5 py-1 ${status.style}`}>{status.label}</span>
+                  {meta.map((m) => <span class="text-ink/60">{m}</span>)}
+                </div>
+                <div class="flex flex-wrap gap-2">{r.tags.map((t) => <span class={tagClass}>{t}</span>)}</div>
+                {(r.pdf || r.code) && (
+                  <div class="relative z-10 flex flex-wrap gap-4">
+                    {r.pdf && (
+                      <a href={contentViewUrl(r.pdf)} target="_blank" rel="noopener noreferrer" class={linkClass}>
+                        PDF <Arrow size={16} />
+                      </a>
+                    )}
+                    {r.code && (
+                      <a href={r.code} target="_blank" rel="noopener noreferrer" class={linkClass}>
+                        Code <Arrow size={16} />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+              <span class="hidden self-center transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-signal sm:block" aria-hidden="true">
+                <Arrow size={16} />
+              </span>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  )
+}

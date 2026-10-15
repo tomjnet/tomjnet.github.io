@@ -1,95 +1,17 @@
 ---
-// One static shell for every post: /posts/view/?p=<slug>. The Markdown is loaded from the posts repo.
+// Old post links were /posts/view/?p=<slug>. Posts now have their own pages at /posts/<slug>/,
+// so this page only forwards old links there.
 import Base from "../../layouts/Base.astro";
-import Header from "../../components/Header.astro";
-import Footer from "../../components/Footer.astro";
-import Cta from "../../components/Cta.astro";
-import Arrow from "../../components/Arrow.astro";
-import { site, url } from "../../data/site";
+import { url } from "../../data/site";
 ---
 
-<Base title="Post">
-  <div id="top"></div>
-  <Header />
-  <main>
-    <div class="container-site pt-8">
-      <a href={url("/posts/")} class="text-[11px] font-bold uppercase tracking-[0.12em] hover:text-signal">← All posts</a>
-    </div>
-    <post-view class="container-site block pb-20">
-      <p data-status class="py-16 text-sm text-ink/60" role="status">Loading…</p>
-      <article data-article hidden>
-        <header class="grid gap-8 border-b-2 border-ink pb-10 pt-8 lg:grid-cols-[1fr_280px] lg:items-end">
-          <div>
-            <p class="kicker">Writing</p>
-            <h1 data-title class="mt-5 font-display text-[44px] uppercase leading-[0.95] sm:text-[72px] lg:text-[96px]"></h1>
-          </div>
-          <div class="flex flex-col gap-4">
-            <p data-date class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink/60"></p>
-            <div data-tags class="flex flex-wrap gap-2"></div>
-          </div>
-        </header>
-        <div class="grid gap-12 pt-12 lg:grid-cols-[1fr_280px]">
-          <div
-            data-body
-            class="prose prose-lg max-w-3xl prose-headings:font-extrabold prose-headings:uppercase prose-headings:tracking-tight prose-a:text-signal prose-a:decoration-2 prose-blockquote:border-l-4 prose-blockquote:border-signal prose-blockquote:bg-mist prose-blockquote:py-4 prose-blockquote:text-2xl prose-blockquote:font-extrabold prose-blockquote:not-italic prose-blockquote:uppercase prose-strong:text-ink prose-img:border prose-img:border-ink/15 prose-pre:rounded-none prose-pre:bg-ink prose-li:marker:text-signal"
-          >
-          </div>
-          <aside class="h-fit bg-mist p-6 lg:sticky lg:top-6">
-            <p class="kicker">Enjoyed it?</p>
-            <p class="mt-3 text-sm leading-relaxed text-ink/70">Tell me what you think on X, or keep reading.</p>
-            <a href={site.social.x} target="_blank" rel="noopener noreferrer" class="btn-ink mt-6 w-full justify-between">Reply on X <Arrow size={12} /></a>
-            <a href={url("/posts/")} class="mt-4 inline-flex items-center gap-2 border-b-2 border-signal pb-0.5 text-[11px] font-bold uppercase tracking-[0.12em] hover:text-signal">
-              More posts <Arrow size={11} />
-            </a>
-          </aside>
-        </div>
-      </article>
-    </post-view>
-    <Cta />
+<Base title="Post" noindex>
+  <main class="container-site py-20 text-sm">
+    <p>This post has moved. <a class="text-signal underline" href={url("/posts/")}>See all posts</a>.</p>
   </main>
-  <Footer />
 </Base>
 
-<script>
-  import { isValidSlug, loadIndex, loadPost, formatDate, escapeHtml } from "../../scripts/posts";
-  import { url } from "../../data/site";
-
-  class PostView extends HTMLElement {
-    async connectedCallback() {
-      const $ = <T extends HTMLElement>(s: string) => this.querySelector<T>(s)!;
-      const status = $("[data-status]");
-      const notFound = `Post not found. <a class="text-signal underline" href="${url("/posts/")}">See all posts</a>`;
-      const slug = new URLSearchParams(location.search).get("p");
-      if (!isValidSlug(slug)) {
-        status.innerHTML = notFound;
-        return;
-      }
-      try {
-        const index = await loadIndex().catch(() => undefined);
-        const post = await loadPost(slug, index);
-        if (!post) {
-          status.innerHTML = notFound;
-          return;
-        }
-        document.title = document.title.replace(/^Post/, post.title);
-        document.querySelector('meta[name="description"]')?.setAttribute("content", post.summary || post.title);
-        $("[data-date]").textContent = post.date ? formatDate(post.date) : "";
-        $("[data-title]").textContent = post.title;
-        $("[data-tags]").innerHTML = post.tags
-          .map(
-            (t) =>
-              `<a href="${url("/posts/")}?tag=${encodeURIComponent(t)}" class="border border-ink/25 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider transition hover:border-signal hover:text-signal">${escapeHtml(t)}</a>`,
-          )
-          .join("");
-        $("[data-body]").innerHTML = post.html;
-        status.hidden = true;
-        $("[data-article]").hidden = false;
-      } catch (err) {
-        console.error(err);
-        status.textContent = "Couldn't load this post right now. Please try again later.";
-      }
-    }
-  }
-
-  customElements.define("post-view", PostView);
+<script is:inline define:vars={{ posts: url("/posts/") }}>
+  const slug = new URLSearchParams(location.search).get("p");
+  if (slug && /^[a-z0-9][a-z0-9._-]*$/i.test(slug)) location.replace(posts + slug + "/");
 </script>

@@ -1,0 +1,16 @@
+name: Daily rebuild
+
+# Rebuilds and redeploys the site every day, so posts with a future date go live
+# automatically on that date, and content repo changes are picked up without a push here.
+on:
+  schedule:
+    - cron: "15 0 * * *" # 00:15 UTC; posts are compared against the UTC date
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    uses: ./.github/workflows/ci-cd.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
