@@ -1,6 +1,5 @@
 ---
 import Brush from "./Brush.astro";
-import { site } from "../data/site";
 import { getPosts, getResearch, researchStatus } from "../lib/content";
 
 // Every number here comes from the content repo at build time, so it can't go stale.
@@ -35,7 +34,6 @@ const facts = [
       real-time physics simulation.
     </p>
     <!-- TODO: add a short, factual career summary (current role, years of experience, domains). -->
-    <p class="mt-8 font-display text-3xl uppercase">{site.name}<span class="text-signal">.</span></p>
   </div>
 
   <div class="border-t-2 border-ink pt-6 lg:border-t-0 lg:pt-0">

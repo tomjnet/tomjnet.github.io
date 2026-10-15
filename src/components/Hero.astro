@@ -11,7 +11,7 @@ const hasHeadshot = existsSync("public/images/headshot.jpg");
 
 const [latest] = await getResearch();
 const latestHref = latest ? (latest.url ?? (latest.pdf ? contentViewUrl(latest.pdf) : url("/research/"))) : undefined;
-const stack = ["C++20", "COBOL", "z/OS", "CUDA", "Azure"];
+const stack = ["C++20", "z/OS", "CUDA", "Azure"];
 ---
 
 <section class="relative isolate flex min-h-[600px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[680px]">
